@@ -1,0 +1,44 @@
+:root { font-family:Arial,Helvetica,sans-serif; color:#181818; background:#fff; --border:#dadada; --muted:#767676; --button-bg:#000; --button-hover:#c6b09f; }
+* { box-sizing:border-box; } body { margin:0; } p { margin:0; }
+header { height:72px; padding:0 48px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+.logo { color:#181818; font-size:24px; font-weight:700; line-height:32px; text-decoration:none; }
+.account { display:flex; align-items:center; gap:24px; }
+.logout.MuiButton-root { color:#fff; background:var(--button-bg); border-color:var(--button-bg); height:40px; min-width:88px; }
+h1 { font-size:32px; line-height:40px; font-weight:600; margin:0; }
+.muted { color:var(--muted); } .meta { font-size:14px; line-height:20px; }
+.login { min-height:calc(100dvh - 72px); display:flex; align-items:center; justify-content:center; padding:32px 20px; }
+.login-form { width:440px; max-width:100%; text-align:center; } .login-subtitle { margin-top:12px; }
+.login-fields { width:360px; max-width:100%; margin:32px auto 0; display:flex; flex-direction:column; text-align:left; }
+.login-fields label { font-size:14px; line-height:20px; margin-bottom:8px; }
+.login-fields .MuiInputBase-root { height:48px; } .login-fields .MuiOutlinedInput-notchedOutline { border-color:var(--border); }
+.login-fields .MuiButton-root { height:48px; margin-top:24px; } .login-note { margin-top:16px; }
+.chat { width:760px; max-width:calc(100% - 40px); height:calc(100dvh - 72px); margin:auto; display:flex; flex-direction:column; padding:40px 0; }
+.chat-title { text-align:center; flex-shrink:0; } .chat-title p { margin-top:8px; line-height:24px; }
+.messages { flex:1; overflow-y:auto; margin-top:40px; padding-right:2px; scrollbar-width:thin; }
+.empty { text-align:center; margin-top:48px; } .exchange + .exchange { margin-top:40px; }
+.user-message { display:flex; flex-direction:column; align-items:flex-end; gap:8px; }
+.bubble { width:600px; max-width:90%; border-radius:6px; background:#f3f3f3; padding:16px 20px; line-height:24px; white-space:pre-wrap; overflow-wrap:anywhere; }
+.answer { margin-top:32px; padding-bottom:24px; } .answer > p + p { margin-top:12px; }
+.answer-part { line-height:24px; white-space:pre-wrap; overflow-wrap:anywhere; }
+.error-result { display:flex; align-items:center; gap:12px; color:var(--muted); line-height:24px; }
+.error-result img,.composer-actions img { width:24px; height:24px; flex-shrink:0; }
+.composer { border:1px solid var(--border); padding:12px 16px; border-radius:6px; min-height:104px; flex-shrink:0; }
+.composer:focus-within { border-color:#919191; }
+.composer textarea { width:100%; height:32px; min-height:32px; max-height:120px; resize:vertical; border:0; outline:0; font:inherit; line-height:24px; color:#181818; background:transparent; }
+.composer textarea::placeholder { color:var(--muted); opacity:1; }
+.composer-actions { display:flex; align-items:center; min-height:40px; gap:8px; } .composer-actions .MuiIconButton-root { padding:8px; }
+.send-button.MuiIconButton-root { margin-left:auto; background:var(--button-bg); color:#fff; border-radius:6px; } .send-button.Mui-disabled { background:#eee; opacity:.6; }
+.notice { color:#ba2424; font-size:14px; margin:12px 0; } .connection { font-size:14px; margin:8px 0; }
+.file-name { font-size:14px; color:#555; margin-bottom:8px; } .attached { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+/* Бежевый цвет наведения измерен по скриншоту: RGB(198, 176, 159). */
+.MuiButton-root,.MuiIconButton-root { transition:background-color .16s ease,color .16s ease,border-color .16s ease; }
+.MuiButton-root.Mui-focusVisible,.MuiIconButton-root.Mui-focusVisible { outline:2px solid #181818; outline-offset:3px; }
+.composer-actions .send-button:not(.Mui-disabled) img { filter:brightness(0) invert(1); }
+@media (hover:hover) {
+  .logo:hover { text-decoration:underline; text-underline-offset:4px; }
+  .login-fields .MuiButton-containedPrimary:not(.Mui-disabled):hover,
+  .composer-actions .send-button:not(.Mui-disabled):hover { background:var(--button-hover); color:#fff; }
+  .logout.MuiButton-root:hover { background:var(--button-hover); color:#fff; border-color:var(--button-hover); }
+  .composer-actions .MuiIconButton-root:not(.send-button):not(.Mui-disabled):hover { background:#f3f3f3; }
+}
+@media(max-width:600px) { header { padding:0 20px; } .logo { font-size:20px; } .account { gap:12px; } .account>span { max-width:100px; overflow:hidden; text-overflow:ellipsis; } h1 { font-size:26px; line-height:34px; } .chat { padding:24px 0; } .messages { margin-top:28px; } .bubble { max-width:95%; } }

@@ -1,0 +1,136 @@
+openapi: 3.0.3
+info:
+  title: ПростоТекст — прикладной уровень SSE
+  version: 1.0.0
+servers:
+  - url: http://localhost:8000
+paths:
+  /session:
+    post:
+      summary: Войти по имени
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: {type: string, minLength: 1, maxLength: 40, example: Алексей}
+      responses:
+        '201':
+          description: Сессия создана
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessionId: {type: string, format: uuid}
+                  name: {type: string}
+        '400': {description: Некорректное имя}
+    delete:
+      summary: Выйти и закрыть поток
+      parameters: [{$ref: '#/components/parameters/Session'}]
+      responses:
+        '204': {description: Сессия закрыта}
+        '401': {description: Сессия не найдена}
+  /events:
+    get:
+      summary: Открыть SSE-поток
+      description: 'EventSource получает ready и result. result содержит Message. Комментарий heartbeat каждые 15 секунд. История не хранится; Last-Event-ID не используется. Swagger UI не предназначен для просмотра постоянного потока — используйте приложение или curl -N.'
+      parameters:
+        - name: sessionId
+          in: query
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        '200':
+          description: Постоянный поток UTF-8
+          content:
+            text/event-stream:
+              schema: {type: string}
+              example: "event: ready\ndata: {\"name\":\"Алексей\"}\n\n"
+        '401': {description: Сессия не найдена}
+  /send:
+    post:
+      summary: Отправить текст транспортному сервису
+      description: 'Сервер добавляет sender, sentAt и requestId, затем вызывает TRANSPORT_URL. Ответ 202 означает принятие запроса, а не готовность упрощения. Один незавершённый запрос на сессию.'
+      parameters: [{$ref: '#/components/parameters/Session'}]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [complexText]
+              properties:
+                complexText: {type: string, minLength: 1, maxLength: 20000, example: Повышение температуры увеличивает среднюю кинетическую энергию частиц вещества.}
+                file:
+                  type: object
+                  description: Необязательный исходный TXT-файл UTF-8 до 64 КБ. Его текст должен совпадать с complexText.
+                  required: [name, mimeType, base64]
+                  properties:
+                    name: {type: string, maxLength: 200, example: text.txt}
+                    mimeType: {type: string, enum: [text/plain]}
+                    base64: {type: string, format: byte}
+      responses:
+        '202':
+          description: Запрос принят. Эти же данные передаются транспорту; при загрузке также передаётся file.
+          content:
+            application/json:
+              example: {sender: Алексей, sentAt: '2026-11-21T10:00:00Z', requestId: 'c76868f0-1179-4e55-95e0-f5d8263507d4', complexText: Сложный текст}
+        '400': {description: Некорректный текст или файл}
+        '401': {description: Сессия не найдена}
+        '409': {description: Поток не открыт или предыдущий ответ не завершён}
+        '413': {description: Слишком большое тело запроса}
+  /receive:
+    post:
+      summary: Получить часть ответа от транспорта
+      description: 'Сохраните sender и requestId исходного запроса. partNumber начинается с 1. Завершение — isLast=true у последней части либо отдельное сообщение с partCount без текста. При error=true содержимое не пересылается. Пропуск номера или неверный partCount завершает запрос ошибкой. Повтор уже принятой части игнорируется. X-Transport-Key требуется, только если задан TRANSPORT_KEY.'
+      parameters:
+        - name: X-Transport-Key
+          in: header
+          schema: {type: string}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/Message'}
+            examples:
+              part:
+                summary: Последняя часть
+                value: {sender: Алексей, sentAt: '2026-11-21T10:00:02Z', requestId: 'c76868f0-1179-4e55-95e0-f5d8263507d4', partNumber: 1, simplifiedText: При нагревании частицы движутся быстрее., error: false, isLast: true}
+              error:
+                summary: Ошибка доставки
+                value: {sender: Алексей, sentAt: '2026-11-21T10:00:02Z', requestId: 'c76868f0-1179-4e55-95e0-f5d8263507d4', error: true, isLast: true}
+      responses:
+        '200': {description: Сообщение обработано}
+        '400': {description: Некорректные данные}
+        '401': {description: Неверный ключ транспорта}
+        '404': {description: Нет активного запроса или подключения пользователя}
+        '413': {description: Слишком большое тело запроса}
+  /health:
+    get:
+      summary: Проверить доступность прикладного сервиса
+      responses:
+        '200': {description: Сервис работает; это не проверка транспорта и LLM}
+components:
+  parameters:
+    Session:
+      name: X-Session-Id
+      in: header
+      required: true
+      schema: {type: string, format: uuid}
+  schemas:
+    Message:
+      type: object
+      required: [sender, sentAt, requestId, error, isLast]
+      properties:
+        sender: {type: string, description: Имя пользователя из исходного запроса}
+        sentAt: {type: string, format: date-time}
+        requestId: {type: string, description: Идентификатор исходного запроса}
+        error: {type: boolean, description: true означает ошибку; текст не показывается}
+        isLast: {type: boolean, description: Признак завершения ответа}
+        partNumber: {type: integer, minimum: 1, description: Обязателен для части текста}
+        simplifiedText: {type: string, minLength: 1, maxLength: 20000}
+        partCount: {type: integer, minimum: 0, description: Обязателен при отдельном завершении без simplifiedText}
